@@ -6,7 +6,7 @@ const cron = require('node-cron');
 const app = express();
 const port = 8000;
 
-let workers = []
+let work = []
 let workedComplete = []
 const maxWorkers = 2
 let currentWorkers = 0
@@ -19,7 +19,7 @@ app.put('/enqueue', (req, res) => {
     const iterations = req.query.iterations;
     const buffer = req.body.buffer;
     const id = uuidv4();
-    workers.push({
+    work.push({
         id,
         iterations,
         buffer,
@@ -43,22 +43,24 @@ app.post('/pullCompleted', (req, res) => {
 
 })
 
+app.get('/giveWork', (req,res) => {
+    let currentWork = work.shift()
+    res.status(200).json(currentWork);
+})
+
 app.listen(port, () => console.log(`Express app running on port ${port}!`));
 
 cron.schedule('*/30 * * * * *', async () => {
     // Check if the first element in the workers queue has been waiting for more than 20 seconds
     console.log("cron run")
-    if (workers.length > 0) {
-        const firstWorker = workers[0];
+    if (work.length > 0) {
+        const firstWorker = work[0];
         const timeDifference = Date.now() - firstWorker.time;
 
-        if (timeDifference > 20000) { // 20 seconds = 20000 milliseconds
+        if (timeDifference > 20000 && currentWorkers < maxWorkers) { // 20 seconds = 20000 milliseconds
             // Create a new worker
-
             await createWorker();
-
-            // Remove the first element from the workers queue
-            workers.shift();
+            currentWorkers += 1;
         }
     }
 });
@@ -78,14 +80,14 @@ async function createWorker() {
                           nohup node app.js &> /dev/null &`;
 
         const userDataBase64 = Buffer.from(userData).toString('base64');
-        const keyPairName = 'omri-key-pair';
+        const keyPairName = "cloud-course";
 
-        const createKeyPairResponse = await ec2.createKeyPair({KeyName: keyPairName}).promise();
-
-        const privateKey = createKeyPairResponse.KeyMaterial;
-        // Save the private key securely, as you won't be able to retrieve it later
-
-        console.log(`Key pair created. Key pair name: ${keyPairName}`);
+        // const createKeyPairResponse = await ec2.createKeyPair({KeyName: keyPairName}).promise();
+        //
+        // const privateKey = createKeyPairResponse.KeyMaterial;
+        // // Save the private key securely, as you won't be able to retrieve it later
+        //
+        // console.log(`Key pair created. Key pair name: ${keyPairName}`);
 
         const params = {
             ImageId: 'ami-042e8287309f5df03', // Replace with the desired AMI ID
@@ -93,7 +95,10 @@ async function createWorker() {
             KeyName: keyPairName, // Replace with the name of your EC2 key pair
             MinCount: 1,
             MaxCount: 1,
-            UserData: userDataBase64
+            UserData: userDataBase64,
+            IamInstanceProfile: {
+                Name: 'InstanceRole'
+            }
         };
 
         ec2.runInstances(params, (err, data) => {
@@ -114,14 +119,14 @@ async function createWorker() {
                         const instancePublicIp = data.Reservations[0].Instances[0].PublicIpAddress;
                         const appUrl = `http://${instancePublicIp}:8000`; // Replace with the actual app URL
 
-                        axios.get(appUrl)
-                            .then((response) => {
-                                console.log('App is running');
-                                // Perform any necessary actions with the running instance
-                            })
-                            .catch((error) => {
-                                console.log('Error accessing app:', error);
-                            });
+                        // axios.get(appUrl)
+                        //     .then((response) => {
+                        //         console.log('App is running');
+                        //         // Perform any necessary actions with the running instance
+                        //     })
+                        //     .catch((error) => {
+                        //         console.log('Error accessing app:', error);
+                        //     });
                     }
                 });
             }

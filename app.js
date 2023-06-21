@@ -10,7 +10,7 @@ let workers = []
 let workedComplete = []
 const maxWorkers = 2
 let currentWorkers = 0
-// AWS.config.update({ region: 'us-east-1' });
+AWS.config.update({ region: 'us-east-1' });
 const ec2 = new AWS.EC2();
 app.use(express.json());
 app.get('/',(req, res) => res.status(200).json(parkingLots))

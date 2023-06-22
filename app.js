@@ -37,15 +37,34 @@ app.put('/enqueue', (req, res) => {
 
 app.post('/pullCompleted', (req, res) => {
     const { top } = req.query;
-    console.log('top:', top);
+    console.log('pullCompleted called with top:', top);
 
-    return res.status(200).json("hi")
+    const results = workedComplete.splice(0, top);
+    return res.status(200).json(results);
+
+})
+
+app.post('/submitWork', (req, res) => {
+    const body = req.body;
+    console.log(`submitWork endpoint was called with payload ${body}`)
+    workedComplete.push(body)
+
+    return res.status(201).json(body)
 
 })
 
 app.get('/giveWork', (req,res) => {
     let currentWork = work.shift()
     res.status(200).json(currentWork);
+})
+
+app.get('/freeWorker', (req, res) => {
+    if (currentWorkers > 0 ) {
+        currentWorkers = currentWorkers -1
+        res.status(200).json(1)
+    } else {
+        res.status(200).json(0)
+    }
 })
 
 app.listen(port, () => console.log(`Express app running on port ${port}!`));
@@ -60,7 +79,7 @@ cron.schedule('*/30 * * * * *', async () => {
         if (timeDifference > 20000 && currentWorkers < maxWorkers) { // 20 seconds = 20000 milliseconds
             // Create a new worker
             await createWorker();
-            currentWorkers += 1;
+            currentWorkers = currentWorkers + 1
         }
     }
 });
@@ -112,15 +131,6 @@ async function createWorker() {
                         // Check if the app is running by making an HTTP request
                         const instancePublicIp = data.Reservations[0].Instances[0].PublicIpAddress;
                         const appUrl = `http://${instancePublicIp}:8000`; // Replace with the actual app URL
-
-                        // axios.get(appUrl)
-                        //     .then((response) => {
-                        //         console.log('App is running');
-                        //         // Perform any necessary actions with the running instance
-                        //     })
-                        //     .catch((error) => {
-                        //         console.log('Error accessing app:', error);
-                        //     });
                     }
                 });
             }

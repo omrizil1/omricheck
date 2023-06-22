@@ -16,6 +16,7 @@ let nodesIps = []
 let firstIp;
 let secondIp;
 let initIps = false;
+let lockTerminateInstance = false;
 
 app.listen(port, () => console.log(`Express app running on port ${port}!`));
 
@@ -65,13 +66,17 @@ async function getWork() {
         console.log("nodesIps length is" ,nodesIps.length)
         return
     }
-    if (Date.now() - lastRun > 60000) {
+    if (Date.now() - lastRun > 60000 && !lockTerminateInstance) {
+        lockTerminateInstance = true
+        console.log("Start terminating process")
        let instanceId = getInstanceId()
+        console.log("instanceId", instanceId, typeof (instanceId))
         const params = {
-            InstanceIds: [instanceId.toString()]
+            InstanceIds: [instanceId]
         };
         for (let ip of nodesIps) {
             let response = await axios.get(`http://${ip}:8000/freeWorker`)
+            console.log(`freeWorker for ${ip} got response.data of ${response.data}`)
             if (response.data > 0 ) {
                 break
             }
@@ -83,7 +88,6 @@ async function getWork() {
             console.error(`Error terminating instance ${instanceId}:`, error);
         }
     } else {
-        console.log("nodesIps", nodesIps)
         for (let ip of nodesIps) {
             console.log("getting work for ip:" ,ip)
             let workObjectResponse;

@@ -11,8 +11,11 @@ AWS.config.update({ region: 'us-east-1' });
 const ec2 = new AWS.EC2();
 app.use(express.json());
 let lastRun = Date.now()
+const instancesName = ['first','second']
+let nodesIps = []
 let firstIp;
 let secondIp;
+let initIps = false;
 
 app.listen(port, () => console.log(`Express app running on port ${port}!`));
 
@@ -42,6 +45,7 @@ const getInstanceIpAddress = async (instanceName) => {
     };
 
     try {
+        console.log("getInstanceIpAddress " ,instanceName)
         const response = await ec2.describeInstances(params).promise();
         const instances = response.Reservations.flatMap(reservation => reservation.Instances);
         if (instances.length > 0) {
@@ -56,32 +60,35 @@ const getInstanceIpAddress = async (instanceName) => {
     }
 };
 
-const instanceName1 = 'first';
-getInstanceIpAddress(instanceName1)
-    .then(ipAddress => {
-        if (ipAddress) {
-            console.log(`IP address of instance '${instanceName1}': ${ipAddress}`);
-            firstIp = ipAddress
-        }
-    })
-    .catch(error => {
-        console.log('Error:', error);
-    });
-
-const instanceName2 = 'second';
-getInstanceIpAddress(instanceName2)
-    .then(ipAddress => {
-        if (ipAddress) {
-            console.log(`IP address of instance '${instanceName2}': ${ipAddress}`);
-            secondIp = ipAddress
-        }
-    })
-    .catch(error => {
-        console.log('Error:', error);
-    });
+// const instanceName1 = 'first';
+// getInstanceIpAddress(instanceName1)
+//     .then(ipAddress => {
+//         if (ipAddress) {
+//             console.log(`IP address of instance '${instanceName1}': ${ipAddress}`);
+//             firstIp = ipAddress
+//         }
+//     })
+//     .catch(error => {
+//         console.log('Error:', error);
+//     });
+//
+// const instanceName2 = 'second';
+// getInstanceIpAddress(instanceName2)
+//     .then(ipAddress => {
+//         if (ipAddress) {
+//             console.log(`IP address of instance '${instanceName2}': ${ipAddress}`);
+//             secondIp = ipAddress
+//         }
+//     })
+//     .catch(error => {
+//         console.log('Error:', error);
+//     });
 
 async function getWork() {
-    let nodesIps = [firstIp, secondIp]
+    if (nodesIps.length < 2 ){
+        console.log("nodesIps length is" ,nodesIps.length)
+        return
+    }
     if (Date.now() - lastRun > 60000) {
        let instanceId = getInstanceId()
         const params = {
@@ -140,6 +147,15 @@ async function getInstanceId() {
     }
 }
 
-cron.schedule('*/2 * * * * *',  () => {
-    getWork().then(r => r)
+cron.schedule('*/5 * * * * *',  async() => {
+    if (!initIps) {
+        for (let name of instancesName) {
+           let ip = await getInstanceIpAddress(name)
+            nodesIps.push(ip)
+        }
+        getWork().then(r => r)
+    } else {
+        getWork().then(r => r)
+    }
+
 })

@@ -69,7 +69,7 @@ async function getWork() {
     if (Date.now() - lastRun > 60000 && !lockTerminateInstance) {
         lockTerminateInstance = true
         console.log("Start terminating process")
-       let instanceId = getInstanceId()
+       let instanceId = await getInstanceId()
         console.log("instanceId", instanceId, typeof (instanceId))
         const params = {
             InstanceIds: [instanceId]

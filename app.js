@@ -55,6 +55,7 @@ app.post('/submitWork', (req, res) => {
 
 app.get('/giveWork', (req,res) => {
     let currentWork = work.shift()
+    console.log(`giveWork endpoint called giving the currentWork ${currentWork} to the worker `)
     res.status(200).json(currentWork);
 })
 
@@ -76,10 +77,12 @@ cron.schedule('*/30 * * * * *', async () => {
         const firstWorker = work[0];
         const timeDifference = Date.now() - firstWorker.time;
 
-        if (timeDifference > 20000 && currentWorkers < maxWorkers) { // 20 seconds = 20000 milliseconds
+        if (timeDifference > 50000 && currentWorkers < maxWorkers) { // 20 seconds = 20000 milliseconds
             // Create a new worker
+            console.log(`Going to create a worker currentWorkers created by this machine is ${currentWorkers}`)
             await createWorker();
             currentWorkers = currentWorkers + 1
+            console.log(`Worker created currentWorkers ${currentWorkers}`)
         }
     }
 });
@@ -111,7 +114,8 @@ async function createWorker() {
             UserData: userDataBase64,
             IamInstanceProfile: {
                 Name: 'InstanceRole'
-            }
+            },
+            SecurityGroups: ['sg-cloud-course']
         };
 
         ec2.runInstances(params, (err, data) => {

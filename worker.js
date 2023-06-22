@@ -60,30 +60,6 @@ const getInstanceIpAddress = async (instanceName) => {
     }
 };
 
-// const instanceName1 = 'first';
-// getInstanceIpAddress(instanceName1)
-//     .then(ipAddress => {
-//         if (ipAddress) {
-//             console.log(`IP address of instance '${instanceName1}': ${ipAddress}`);
-//             firstIp = ipAddress
-//         }
-//     })
-//     .catch(error => {
-//         console.log('Error:', error);
-//     });
-//
-// const instanceName2 = 'second';
-getInstanceIpAddress(instanceName2)
-    .then(ipAddress => {
-        if (ipAddress) {
-            console.log(`IP address of instance '${instanceName2}': ${ipAddress}`);
-            secondIp = ipAddress
-        }
-    })
-    .catch(error => {
-        console.log('Error:', error);
-    });
-
 async function getWork() {
     if (nodesIps.length < 2 ) {
         console.log("nodesIps length is" ,nodesIps.length)

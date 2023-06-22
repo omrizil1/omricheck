@@ -13,7 +13,6 @@ let currentWorkers = 0
 AWS.config.update({ region: 'us-east-1' });
 const ec2 = new AWS.EC2();
 app.use(express.json());
-app.get('/',(req, res) => res.status(200).json(parkingLots))
 
 app.put('/enqueue', (req, res) => {
     const iterations = req.query.iterations;
@@ -100,7 +99,7 @@ async function createWorker() {
                           cd /home/ubuntu/your-app
                           npm install
                           touch logfile.log
-                          nohup node app.js > ./logfile.log 2>&1 &`;
+                          nohup node worker.js > ./logfile.log 2>&1 &`;
 
         const userDataBase64 = Buffer.from(userData).toString('base64');
         const keyPairName = "cloud-course";

@@ -74,20 +74,14 @@ async function createWorker() {
         const userData = `#!/bin/bash
                           curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
                           sudo apt-get install -y nodejs
-                          git clone https://github.com/omrizil1/cloud_computing_hw1.git /home/ubuntu/your-app
+                          git clone https://github.com/omrizil1/omricheck.git /home/ubuntu/your-app
                           cd /home/ubuntu/your-app
                           npm install
-                          nohup node app.js &> /dev/null &`;
+                          touch logfile.log
+                          nohup node app.js > ./logfile.log 2>&1 &`;
 
         const userDataBase64 = Buffer.from(userData).toString('base64');
         const keyPairName = "cloud-course";
-
-        // const createKeyPairResponse = await ec2.createKeyPair({KeyName: keyPairName}).promise();
-        //
-        // const privateKey = createKeyPairResponse.KeyMaterial;
-        // // Save the private key securely, as you won't be able to retrieve it later
-        //
-        // console.log(`Key pair created. Key pair name: ${keyPairName}`);
 
         const params = {
             ImageId: 'ami-042e8287309f5df03', // Replace with the desired AMI ID

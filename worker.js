@@ -48,7 +48,9 @@ const getInstanceIpAddress = async (instanceName) => {
     try {
         console.log("getInstanceIpAddress " ,instanceName)
         const response = await ec2.describeInstances(params).promise();
-        const instances = response.Reservations.flatMap(reservation => reservation.Instances);
+        const instances = response.Reservations
+            .flatMap(reservation => reservation.Instances)
+            .filter(instance => instance.State.Name === 'running');
         if (instances.length > 0) {
             return instances[0].PublicIpAddress || instances[0].PrivateIpAddress;
         } else {

@@ -104,6 +104,8 @@ async function getWork() {
             console.log("getting work for ip:" ,ip)
             let workObject = await axios.get(`http://${ip}:8000/giveWork`);
             if (workObject) {
+                console.log(`got work from ${ip} the work is ${workObject.data}`)
+                lastRun = Date.now()
                 let workData = workObject.data
                 work(workData.buffer, workData.iterations)
                     .then(output => {
@@ -117,10 +119,10 @@ async function getWork() {
                                 console.log('Result submitted successfully', response.data);
                             })
                             .catch(error => {
-                                console.error('Error submitting result:', error);
+                                console.log('Error submitting result:', error);
                             });
                     }).catch(error => {
-                    console.error('Error processing work:', error);
+                    console.log('Error processing work:', error);
                 });
             }
         }
@@ -134,10 +136,10 @@ async function getInstanceId() {
         console.log("instanceId is ", response.data)
         return response.data;
     } catch (error) {
-        throw new Error('Error retrieving instance ID:', error);
+        console.log('Error retrieving instance ID:', error);
     }
 }
 
-cron.schedule('*/30 * * * * *',  () => {
+cron.schedule('*/2 * * * * *',  () => {
     getWork().then(r => r)
 })

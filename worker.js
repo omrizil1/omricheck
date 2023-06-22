@@ -86,11 +86,18 @@ async function getWork() {
         console.log("nodesIps", nodesIps)
         for (let ip of nodesIps) {
             console.log("getting work for ip:" ,ip)
-            let workObject = await axios.get(`http://${ip}:8000/giveWork`);
-            if (workObject) {
-                console.log(`got work from ${ip} the work is ${workObject.data}`)
+            let workObjectResponse;
+            try {
+                workObjectResponse = await axios.get(`http://${ip}:8000/giveWork`);
+            } catch (error) {
+                console.log(error)
+                return
+            }
+            let workData = workObjectResponse.data
+            if (workData) {
+                console.log(`got work from ${ip} the work is ${workObjectResponse.data}`)
                 lastRun = Date.now()
-                let workData = workObject.data
+                let workData = workObjectResponse.data
                 work(workData.buffer, workData.iterations)
                     .then(output => {
                         console.log(`WorkData ${workData} Output is: ${output} for workData`)

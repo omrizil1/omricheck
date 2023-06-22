@@ -73,19 +73,19 @@ const getInstanceIpAddress = async (instanceName) => {
 //     });
 //
 // const instanceName2 = 'second';
-// getInstanceIpAddress(instanceName2)
-//     .then(ipAddress => {
-//         if (ipAddress) {
-//             console.log(`IP address of instance '${instanceName2}': ${ipAddress}`);
-//             secondIp = ipAddress
-//         }
-//     })
-//     .catch(error => {
-//         console.log('Error:', error);
-//     });
+getInstanceIpAddress(instanceName2)
+    .then(ipAddress => {
+        if (ipAddress) {
+            console.log(`IP address of instance '${instanceName2}': ${ipAddress}`);
+            secondIp = ipAddress
+        }
+    })
+    .catch(error => {
+        console.log('Error:', error);
+    });
 
 async function getWork() {
-    if (nodesIps.length < 2 ){
+    if (nodesIps.length < 2 ) {
         console.log("nodesIps length is" ,nodesIps.length)
         return
     }
@@ -107,6 +107,7 @@ async function getWork() {
             console.error(`Error terminating instance ${instanceId}:`, error);
         }
     } else {
+        console.log("nodesIps", nodesIps)
         for (let ip of nodesIps) {
             console.log("getting work for ip:" ,ip)
             let workObject = await axios.get(`http://${ip}:8000/giveWork`);
@@ -150,10 +151,18 @@ async function getInstanceId() {
 cron.schedule('*/5 * * * * *',  async() => {
     if (!initIps) {
         for (let name of instancesName) {
-           let ip = await getInstanceIpAddress(name)
-            nodesIps.push(ip)
+            getInstanceIpAddress(name)
+                .then(ipAddress => {
+                    if (ipAddress) {
+                        console.log(`IP address of instance '${instanceName2}': ${ipAddress}`);
+                        nodesIps.push(ipAddress)
+                    }
+                })
+                .catch(error => {
+                    console.log('Error:', error);
+                });
         }
-        getWork().then(r => r)
+        initIps = true;
     } else {
         getWork().then(r => r)
     }

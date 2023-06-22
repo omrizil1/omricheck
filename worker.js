@@ -18,11 +18,17 @@ app.listen(port, () => console.log(`Express app running on port ${port}!`));
 
 
 function work(buffer, iterations) {
-    let output = crypto.createHash('sha512').update(buffer).digest();
-    for (let i = 0; i < iterations - 1; i++) {
-        output = crypto.createHash('sha512').update(output).digest();
-    }
-    return output;
+    return new Promise((resolve, reject) => {
+        try {
+            let output = crypto.createHash('sha512').update(buffer).digest();
+            for (let i = 0; i < iterations - 1; i++) {
+                output = crypto.createHash('sha512').update(output).digest();
+            }
+            resolve(output);
+        } catch (error) {
+            reject(error);
+        }
+    });
 }
 
 const getInstanceIpAddress = async (instanceName) => {
@@ -75,18 +81,63 @@ getInstanceIpAddress(instanceName2)
     });
 
 async function getWork() {
-    let nodesIps = [secondIp, firstIp]
-    if (Date.now() - lastRun > 100000) {
-        //terminzte worker
+    let nodesIps = [firstIp, secondIp]
+    if (Date.now() - lastRun > 60000) {
+       let instanceId = getInstanceId()
+        const params = {
+            InstanceIds: [instanceId]
+        };
+        for (let ip of nodesIps) {
+            let response = await axios.get(`http://${ip}:8000/freeWorker`)
+            if (response.data > 0 ) {
+                break
+            }
+        }
+        try {
+            await ec2.terminateInstances(params).promise();
+            console.log(`Instance ${instanceId} terminated successfully.`);
+        } catch (error) {
+            console.error(`Error terminating instance ${instanceId}:`, error);
+        }
     } else {
         for (let ip of nodesIps) {
-            console.log("ip" ,ip)
+            console.log("getting work for ip:" ,ip)
             let workObject = await axios.get(`http://${ip}:8000/giveWork`);
-            console.log("workObject", workObject.data)
+            if (workObject) {
+                let workData = workObject.data
+                work(workData.buffer, workData.iterations)
+                    .then(output => {
+                        console.log(`WorkData ${workData} Output is: ${output} for workData`)
+                        let result = {
+                            finalValue : output,
+                            workId : workData.id
+                        }
+                        axios.post(`http://${ip}:8000/submitWork`, result)
+                            .then(response => {
+                                console.log('Result submitted successfully', response.data);
+                            })
+                            .catch(error => {
+                                console.error('Error submitting result:', error);
+                            });
+                    }).catch(error => {
+                    console.error('Error processing work:', error);
+                });
+            }
         }
     }
 }
 
-cron.schedule('*/10 * * * * *',  () => {
+async function getInstanceId() {
+    try {
+        console.log("getInstanceId run")
+        const response = await axios.get('http://169.254.169.254/latest/meta-data/instance-id');
+        console.log("instanceId is ", response.data)
+        return response.data;
+    } catch (error) {
+        throw new Error('Error retrieving instance ID:', error);
+    }
+}
+
+cron.schedule('*/30 * * * * *',  () => {
     getWork().then(r => r)
 })

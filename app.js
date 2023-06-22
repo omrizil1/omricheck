@@ -115,7 +115,7 @@ async function createWorker() {
             IamInstanceProfile: {
                 Name: 'InstanceRole'
             },
-            SecurityGroups: ['sg-cloud-course']
+            SecurityGroups: ['my-sg-cloud-course']
         };
 
         ec2.runInstances(params, (err, data) => {

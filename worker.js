@@ -68,7 +68,7 @@ async function getWork() {
     if (Date.now() - lastRun > 60000) {
        let instanceId = getInstanceId()
         const params = {
-            InstanceIds: [instanceId]
+            InstanceIds: [instanceId.toString()]
         };
         for (let ip of nodesIps) {
             let response = await axios.get(`http://${ip}:8000/freeWorker`)
@@ -125,6 +125,7 @@ async function getInstanceId() {
         console.log("getInstanceId run")
         const response = await axios.get('http://169.254.169.254/latest/meta-data/instance-id');
         console.log("instanceId is ", response.data)
+        console.log("instanceId is type ", typeof(response.data))
         return response.data;
     } catch (error) {
         console.log('Error retrieving instance ID:', error);

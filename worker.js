@@ -14,8 +14,8 @@ let lastRun = Date.now()
 const instanceName1 ='first';
 const instanceName2 = 'second';
 let nodesIps = []
-let initIp1 = false;
-let initIp2 = false;
+let initIps = false
+let finishInit = false;
 let lockTerminateInstance = false;
 
 app.listen(port, () => console.log(`Express app running on port ${port}!`));
@@ -136,32 +136,19 @@ async function getInstanceId() {
     }
 }
 
-cron.schedule('*/10 * * * * *',  async() => {
-    if (!initIp1 && !initIp2)  {
-            console.log("Init ips")
-            getInstanceIpAddress(instanceName1)
-                .then(ipAddress => {
-                    if (ipAddress) {
-                        console.log(`IP address of instance '${instanceName1}': ${ipAddress}`);
-                        nodesIps.push(ipAddress)
-                        initIp1 = true
-                    }
-                })
-                .catch(error => {
-                    console.log('Error:', error);
-                });
-        getInstanceIpAddress(instanceName2)
-            .then(ipAddress => {
-                if (ipAddress) {
-                    console.log(`IP address of instance '${instanceName2}': ${ipAddress}`);
-                    nodesIps.push(ipAddress)
-                    initIp2 = true
-                }
-            })
-            .catch(error => {
-                console.log('Error:', error);
-            });
-    } else {
+cron.schedule('*/8 * * * * *',  async() => {
+    if (!initIps)  {
+        initIps = true
+        console.log("Init ips")
+        let firstIp = await getInstanceIpAddress(instanceName1)
+        console.log("First Ip", firstIp)
+        let secondIp = await getInstanceIpAddress(instanceName2)
+        console.log("Second Ip", secondIp)
+        nodesIps.push(firstIp)
+        nodesIps.push(secondIp)
+        console.log("Finish Init")
+        finishInit = true
+    } if (finishInit) {
         getWork().then(r => r)
     }
 

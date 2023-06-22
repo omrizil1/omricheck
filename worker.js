@@ -109,7 +109,7 @@ async function getWork() {
                         console.log(`WorkData ${workData} Output is: ${output} for workData`)
                         let result = {
                             finalValue : output,
-                            workId : workData.id
+                            id : workData.id
                         }
                         axios.post(`http://${ip}:8000/submitWork`, result)
                             .then(response => {

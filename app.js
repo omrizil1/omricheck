@@ -10,6 +10,7 @@ let work = []
 let workedComplete = []
 const maxWorkers = 2
 let currentWorkers = 0
+let creatingWorker = false;
 AWS.config.update({ region: 'us-east-1' });
 const ec2 = new AWS.EC2();
 app.use(express.json());
@@ -45,7 +46,7 @@ app.post('/pullCompleted', (req, res) => {
 
 app.post('/submitWork', (req, res) => {
     const body = req.body;
-    console.log(`submitWork endpoint was called with payload ${body}`)
+    console.log(`submitWork endpoint was called with id ${body.id}`)
     workedComplete.push(body)
 
     return res.status(201).json(body)
@@ -54,7 +55,7 @@ app.post('/submitWork', (req, res) => {
 
 app.get('/giveWork', (req,res) => {
     let currentWork = work.shift()
-    console.log(`giveWork endpoint called giving the currentWork ${currentWork} to the worker `)
+    console.log(`giveWork endpoint called giving the currentWork with id ${currentWork.id} to the worker `)
     res.status(200).json(currentWork);
 })
 
@@ -69,16 +70,16 @@ app.get('/freeWorker', (req, res) => {
 
 app.listen(port, () => console.log(`Express app running on port ${port}!`));
 
-cron.schedule('*/30 * * * * *', async () => {
-    // Check if the first element in the workers queue has been waiting for more than 20 seconds
+cron.schedule('*/10 * * * * *', async () => {
     console.log("cron run")
     if (work.length > 0) {
-        const firstWorker = work[0];
-        const timeDifference = Date.now() - firstWorker.time;
+        const firstWork = work[0];
+        const timeDifference = Date.now() - firstWork.time;
 
-        if (timeDifference > 50000 && currentWorkers < maxWorkers) { // 20 seconds = 20000 milliseconds
+        if (timeDifference > 20000 && currentWorkers < maxWorkers && !creatingWorker) { // 20 seconds = 20000 milliseconds
             // Create a new worker
             console.log(`Going to create a worker currentWorkers created by this machine is ${currentWorkers}`)
+            creatingWorker = true
             await createWorker();
             currentWorkers = currentWorkers + 1
             console.log(`Worker created currentWorkers ${currentWorkers}`)
@@ -130,7 +131,7 @@ async function createWorker() {
                         console.log('Error waiting for instance to run:', err);
                     } else {
                         console.log('Worker instance is running');
-
+                        creatingWorker = false
                         // Check if the app is running by making an HTTP request
                         const instancePublicIp = data.Reservations[0].Instances[0].PublicIpAddress;
                         const appUrl = `http://${instancePublicIp}:8000`; // Replace with the actual app URL

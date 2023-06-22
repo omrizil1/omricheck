@@ -154,7 +154,7 @@ cron.schedule('*/5 * * * * *',  async() => {
             getInstanceIpAddress(name)
                 .then(ipAddress => {
                     if (ipAddress) {
-                        console.log(`IP address of instance '${instanceName2}': ${ipAddress}`);
+                        console.log(`IP address of instance '${name}': ${ipAddress}`);
                         nodesIps.push(ipAddress)
                     }
                 })

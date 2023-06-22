@@ -55,7 +55,9 @@ app.post('/submitWork', (req, res) => {
 
 app.get('/giveWork', (req,res) => {
     let currentWork = work.shift()
-    console.log(`giveWork endpoint called giving the currentWork with id ${currentWork.id} to the worker `)
+    if (currentWork) {
+        console.log(`giveWork endpoint called giving the currentWork with id ${currentWork.id} to the worker `)
+    }
     res.status(200).json(currentWork);
 })
 
@@ -133,7 +135,7 @@ async function createWorker() {
                         console.log('Worker instance is running');
                         setTimeout(() => {
                             creatingWorker = false
-                        },35000)
+                        },50000)
                         // Check if the app is running by making an HTTP request
                         const instancePublicIp = data.Reservations[0].Instances[0].PublicIpAddress;
                         const appUrl = `http://${instancePublicIp}:8000`; // Replace with the actual app URL

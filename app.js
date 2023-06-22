@@ -131,7 +131,9 @@ async function createWorker() {
                         console.log('Error waiting for instance to run:', err);
                     } else {
                         console.log('Worker instance is running');
-                        creatingWorker = false
+                        setTimeout(() => {
+                            creatingWorker = false
+                        },35000)
                         // Check if the app is running by making an HTTP request
                         const instancePublicIp = data.Reservations[0].Instances[0].PublicIpAddress;
                         const appUrl = `http://${instancePublicIp}:8000`; // Replace with the actual app URL
